@@ -1,7 +1,7 @@
 use Test;
 use POSIX::getnameinfo;
 
-plan 6;
+plan 7;
 
 # Loopback numeric host check (avoids external DNS / network dependencies in automated builds)
 subtest 'IPv4 numeric loopback' => {
@@ -10,6 +10,14 @@ subtest 'IPv4 numeric loopback' => {
     isa-ok $res, NameInfoResult, 'Returns NameInfoResult';
     is $res.host, '127.0.0.1', 'Host matches numeric IPv4 loopback';
     is $res.service, '80', 'Service matches numeric port';
+};
+
+subtest 'Reverse hostname lookup (loopback)' => {
+    plan 2;
+    # No NI_NUMERICHOST passed; forces reverse lookup of 127.0.0.1
+    my $res = Get-Name-Info('127.0.0.1', 22);
+    is $res.host, 'localhost', '127.0.0.1 resolves to localhost hostname';
+    is $res.service, 'ssh', 'Port 22 resolves to ssh service name';
 };
 
 subtest 'IPv4 service lookup' => {
