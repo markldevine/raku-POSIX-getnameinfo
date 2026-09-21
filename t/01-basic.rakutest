@@ -1,0 +1,45 @@
+use Test;
+use POSIX::getnameinfo;
+
+plan 6;
+
+# Loopback numeric host check (avoids external DNS / network dependencies in automated builds)
+subtest 'IPv4 numeric loopback' => {
+    plan 3;
+    my $res = Get-Name-Info('127.0.0.1', 80, NI_NUMERICHOST +| NI_NUMERICSERV);
+    isa-ok $res, NameInfoResult, 'Returns NameInfoResult';
+    is $res.host, '127.0.0.1', 'Host matches numeric IPv4 loopback';
+    is $res.service, '80', 'Service matches numeric port';
+};
+
+subtest 'IPv4 service lookup' => {
+    plan 2;
+    my $res = Get-Name-Info('127.0.0.1', 22, NI_NUMERICHOST);
+    is $res.host, '127.0.0.1', 'Host is numeric';
+    is $res.service, 'ssh', 'Port 22 resolves to ssh service name';
+};
+
+subtest 'IPv6 numeric loopback' => {
+    plan 2;
+    my $res = Get-Name-Info('::1', 443, NI_NUMERICHOST +| NI_NUMERICSERV);
+    is $res.host, '::1', 'Host matches IPv6 loopback';
+    is $res.service, '443', 'Service matches numeric 443';
+};
+
+subtest 'IPv6 service lookup' => {
+    plan 2;
+    my $res = Get-Name-Info('::1', 80, NI_NUMERICHOST);
+    is $res.host, '::1', 'Host is numeric';
+    is $res.service, 'http', 'Port 80 resolves to http service name';
+};
+
+subtest 'Gist output formatting' => {
+    plan 1;
+    my $res = Get-Name-Info('127.0.0.1', 53, NI_NUMERICHOST +| NI_NUMERICSERV);
+    is $res.gist, 'Host: 127.0.0.1, Service: 53', 'Gist renders clean string';
+};
+
+subtest 'Invalid IP failure handling' => {
+    plan 1;
+    dies-ok { Get-Name-Info('999.999.999.999', 80) }, 'Fails on invalid IP format';
+};
