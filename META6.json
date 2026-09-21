@@ -1,0 +1,29 @@
+{
+  "name": "POSIX::getnameinfo",
+  "description": "NativeCall bindings to POSIX getnameinfo for address-to-name resolution",
+  "version": "0.0.1",
+  "perl": "6.d",
+  "authors": [
+    "Mark Devine"
+  ],
+  "auth": "zef:markldevine",
+  "source-url": "https://github.com/markldevine/raku-POSIX-getnameinfo.git",
+  "support": {
+    "source": "https://github.com/markldevine/raku-POSIX-getnameinfo.git"
+  },
+  "license": "Artistic-2.0",
+  "tags": [
+    "POSIX",
+    "network",
+    "dns",
+    "socket",
+    "NativeCall"
+  ],
+  "provides": {
+    "POSIX::getnameinfo": "lib/POSIX/getnameinfo.rakumod"
+  },
+  "depends": [],
+  "test-depends": [
+    "Test"
+  ]
+}
