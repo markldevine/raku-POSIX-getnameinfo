@@ -9,12 +9,29 @@ constant NI_MAXSERV is export = 32;
 constant AF_INET    is export = 2;
 constant AF_INET6   is export = $*KERNEL.name eq 'darwin' ?? 30 !! 10;
 
+# Flag values differ between glibc/Linux and BSD/Darwin
+my constant %FLAGS = $*KERNEL.name eq 'darwin'
+    ?? {
+        NI_NOFQDN      => 0x01,
+        NI_NUMERICHOST => 0x02,
+        NI_NAMEREQD    => 0x04,
+        NI_NUMERICSERV => 0x08,
+        NI_DGRAM       => 0x10,
+    }
+    !! {
+        NI_NUMERICHOST => 1,
+        NI_NUMERICSERV => 2,
+        NI_NOFQDN      => 4,
+        NI_NAMEREQD    => 8,
+        NI_DGRAM       => 16,
+    };
+
 enum NameInfoFlags is export (
-    NI_NOFQDN        => 0x01,
-    NI_NUMERICHOST   => 0x02,
-    NI_NAMEREQD      => 0x04,
-    NI_NUMERICSERV   => 0x08,
-    NI_DGRAM         => 0x10,
+    NI_NUMERICHOST => %FLAGS<NI_NUMERICHOST>,
+    NI_NUMERICSERV => %FLAGS<NI_NUMERICSERV>,
+    NI_NOFQDN      => %FLAGS<NI_NOFQDN>,
+    NI_NAMEREQD    => %FLAGS<NI_NAMEREQD>,
+    NI_DGRAM       => %FLAGS<NI_DGRAM>,
 );
 
 # Low-level POSIX getnameinfo signature
