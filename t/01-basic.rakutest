@@ -41,5 +41,5 @@ subtest 'Gist output formatting' => {
 
 subtest 'Invalid IP failure handling' => {
     plan 1;
-    dies-ok { Get-Name-Info('999.999.999.999', 80) }, 'Fails on invalid IP format';
+    dies-ok { sink Get-Name-Info('999.999.999.999', 80) }, 'Fails on invalid IP format';
 };
