@@ -9,7 +9,7 @@ constant NI_MAXSERV is export = 32;
 constant AF_INET    is export = 2;
 constant AF_INET6   is export = $*KERNEL.name eq 'darwin' ?? 30 !! 10;
 
-public enum NameInfoFlags is export (
+enum NameInfoFlags is export (
     NI_NOFQDN        => 0x01,
     NI_NUMERICHOST   => 0x02,
     NI_NAMEREQD      => 0x04,
