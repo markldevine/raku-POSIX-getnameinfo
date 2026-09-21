@@ -5,7 +5,7 @@ use NativeCall;
 constant NI_MAXHOST is export = 1025;
 constant NI_MAXSERV is export = 32;
 
-# Address families (standard Linux values; AF_INET6 is 30 on BSD/Darwin)
+# Address families
 constant AF_INET    is export = 2;
 constant AF_INET6   is export = $*KERNEL.name eq 'darwin' ?? 30 !! 10;
 
@@ -28,20 +28,29 @@ sub getnameinfo(
 # inet_pton for populating binary addresses cleanly
 sub inet_pton(int32, Str, Pointer) returns int32 is native { * }
 
+# Address inner structs so we get direct pointers without pointer math
+class InAddr is repr('CStruct') {
+    has uint32 $.s_addr is rw;
+}
+
+class In6Addr is repr('CStruct') {
+    has uint64 $.s6_addr_hi is rw;
+    has uint64 $.s6_addr_lo is rw;
+}
+
 class SockAddrIn is repr('CStruct') {
-    has uint16 $.sin_family;
-    has uint16 $.sin_port;
-    has uint32 $.sin_addr;
-    has uint64 $.sin_zero;
+    has uint16 $.sin_family is rw;
+    has uint16 $.sin_port   is rw;
+    HAS InAddr $.sin_addr;
+    has uint64 $.sin_zero   is rw;
 }
 
 class SockAddrIn6 is repr('CStruct') {
-    has uint16 $.sin6_family;
-    has uint16 $.sin6_port;
-    has uint32 $.sin6_flowinfo;
-    has uint64 $.sin6_addr_hi;
-    has uint64 $.sin6_addr_lo;
-    has uint32 $.sin6_scope_id;
+    has uint16 $.sin6_family   is rw;
+    has uint16 $.sin6_port     is rw;
+    has uint32 $.sin6_flowinfo is rw;
+    HAS In6Addr $.sin6_addr;
+    has uint32 $.sin6_scope_id is rw;
 }
 
 class NameInfoResult is export {
@@ -51,9 +60,9 @@ class NameInfoResult is export {
     method gist(--> Str) { "Host: $.host, Service: $.service" }
 }
 
-# Endian conversion for port numbers
+# Clean htons with explicit precedence parens
 sub htons(Int $port --> uint16) {
-    return ($port +& 0xFF) +< 8 +| ($port +> 8 +& 0xFF);
+    (($port +& 0xFF) +< 8) +| (($port +> 8) +& 0xFF);
 }
 
 proto sub Get-Name-Info(|) is export { * }
@@ -69,8 +78,8 @@ multi sub Get-Name-Info(Str $ip, Int $port = 0, Int $flags = 0 --> NameInfoResul
         $sa6.sin6_family = AF_INET6;
         $sa6.sin6_port   = htons($port);
 
-        # Pointer offset 8 bytes past family, port, and flowinfo to reach sin6_addr
-        my $addr-ptr = nativecast(Pointer, $sa6) + 8;
+        # Direct pointer to the embedded struct - zero manual pointer math
+        my $addr-ptr = nativecast(Pointer, $sa6.sin6_addr);
         fail "Invalid IPv6 address: $ip" unless inet_pton(AF_INET6, $ip, $addr-ptr) == 1;
 
         $sockaddr-ptr = nativecast(Pointer, $sa6);
@@ -81,8 +90,8 @@ multi sub Get-Name-Info(Str $ip, Int $port = 0, Int $flags = 0 --> NameInfoResul
         $sa4.sin_family = AF_INET;
         $sa4.sin_port   = htons($port);
 
-        # Pointer offset 4 bytes past family and port to reach sin_addr
-        my $addr-ptr = nativecast(Pointer, $sa4) + 4;
+        # Direct pointer to the embedded struct - zero manual pointer math
+        my $addr-ptr = nativecast(Pointer, $sa4.sin_addr);
         fail "Invalid IPv4 address: $ip" unless inet_pton(AF_INET, $ip, $addr-ptr) == 1;
 
         $sockaddr-ptr = nativecast(Pointer, $sa4);
